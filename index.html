@@ -2,10 +2,10 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
-  <title>シフト希望入力フォーム</title>
+  <title>シフト希望休入力フォーム</title>
 </head>
 <body>
-  <h2>シフト希望入力</h2>
+  <h2>シフト希望休の入力</h2>
  
   <form id="shiftForm">
     <label>
@@ -41,7 +41,7 @@
       fetch(scriptURL, { method: "POST", body: formData })
         .then(res => res.text())
         .then(txt => {
-          alert("送信成功しました！");
+          alert("送信成功");
           form.reset(); // 入力内容をリセット
         })
         .catch(err => {
