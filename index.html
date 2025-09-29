@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>シフト希望入力フォーム</title>
+</head>
+<body>
+  <h2>シフト希望入力</h2>
+ 
+  <form id="shiftForm">
+    <label>
+      名前:
+      <input type="text" name="name" required>
+    </label>
+    <br><br>
+ 
+    <label>
+      希望日:
+      <input type="date" name="date" required>
+    </label>
+    <br><br>
+ 
+    <label>
+      希望時間:
+      <input type="text" name="time" placeholder="" required>
+    </label>
+    <br><br>
+ 
+    <button type="submit">送信</button>
+  </form>
+ 
+  <script>
+    const scriptURL = "https://script.google.com/macros/s/AKfycbzLRBb5uNRN3OlKh5VefeTaRkc3PvZQEBXntWIhvQf_7pGbQtau_Nqm8pdO6LnhaO26/exec"; // GASのURL
+    const form = document.getElementById("shiftForm");
+ 
+    form.addEventListener("submit", e => {
+      e.preventDefault();
+ 
+      const formData = new FormData(form);
+ 
+      fetch(scriptURL, { method: "POST", body: formData })
+        .then(res => res.text())
+        .then(txt => {
+          alert("送信成功しました！");
+          form.reset(); // 入力内容をリセット
+        })
+        .catch(err => {
+          console.error("送信エラー:", err);
+          alert("送信エラー");
+        });
+    });
+  </script>
+</body>
+</html>
