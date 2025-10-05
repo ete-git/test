@@ -204,20 +204,43 @@ document.getElementById('submitBtn').addEventListener('click', async ()=>{
   const payload = { date, name, start, end, duration: '', notes };
 
   // GASデプロイURL
-  const GAS_URL = 'https://script.google.com/macros/s/AKfycbzJWaPiPdEkXsLO_SyZ4SMjjalg42T7l-DyvqkG6PaGxNdLCMTzMxhaUo_vVMZ6hurjXQ/exec';
+  const GAS_URL = 'https://script.google.com/macros/s/AKfycby966gTlc7sVZGsWXXtsLsnlp3tvn-pnIxovYQ2QDRwlcrYJ6EEhpWOsKkQz5vySsFKaQ/exec';
 
   try {
     const res = await fetch(GAS_URL, {
       method: 'POST',
-      mode: 'cors', // 外部アクセスのため
+      mode: 'cors',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
 
-    const text = await res.text();
-    result.textContent = text || '送信完了しました！';
+    if (!res.ok) {
+      // サーバーが200以外を返した場合
+      const text = await res.text();
+      alert('サーバーエラー: ' + text);
+      return;
+    }
+
+    // JSONで返す場合
+    let json;
+    try {
+      json = await res.json();
+    } catch {
+      json = { status: 'ok' }; // 返り値がJSONでなくてもOKとする
+    }
+
+    if (json.status === 'ok') {
+      alert('送信完了しました');
+      result.textContent = '送信完了しました';
+    } else {
+      alert('送信エラー: ' + (json.message || '不明なエラー'));
+      result.textContent = '送信エラー: ' + (json.message || '不明なエラー');
+    }
+
   } catch (err) {
-    result.textContent = '送信中にエラーが発生しました: ' + err.message;
+    // fetch自体でネットワークエラーなどが起きた場合
+    alert('通信中にエラーが発生しました: ' + err.message);
+    result.textContent = '通信中にエラーが発生しました: ' + err.message;
   }
 });
 </script>
