@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>シフト休暇希望フォーム</title>
+
+<!-- ====== 見た目（CSS）設定 ====== -->
+<style>
+  body{
+    font-family:system-ui, -apple-system, "Segoe UI", Roboto, "Hiragino Kaku Gothic ProN", "Noto Sans JP";
+    padding:18px; max-width:900px; margin:0 auto;
+  }
+  h1{font-size:20px;margin-bottom:6px;}
+  /* 全体レイアウト：左にカレンダー、右にフォーム */
+  .wrap{
+    display:grid;
+    grid-template-columns: 1fr 380px;
+    gap:18px;
+  }
+  /* カレンダーの見た目 */
+  .calendar{
+    background:#fff;
+    border:1px solid #ddd;
+    padding:12px;
+    border-radius:8px;
+  }
+  .cal-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:8px;
+  }
+  button{cursor:pointer}
+  /* 曜日・日付マスのグリッドレイアウト */
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(7,1fr);
+    gap:6px;
+  }
+  /* 各日のマス */
+  .day{
+    padding:8px;
+    border-radius:6px;
+    text-align:center;
+    user-select:none;
+  }
+  .day:hover{background:#f0f0f0}
+  .day.inactive{color:#bbb}
+  .day.selected{background:#2d8cff;color:white}
+  /* 入力フォーム */
+  label{display:block;font-size:13px;margin-top:8px;}
+  input, textarea{
+    width:100%;
+    box-sizing:border-box;
+    padding:8px;
+    margin-top:4px;
+    border-radius:6px;
+    border:1px solid #ccc
+  }
+  /* 送信ボタン */
+  .submit{
+    margin-top:12px;
+    padding:10px 14px;
+    border-radius:8px;
+    background:#2d8cff;
+    color:white;
+    border:0;
+    font-weight:600
+  }
+  .info{font-size:13px;color:#666;margin-top:8px}
+</style>
+</head>
+
+<body>
+  <h1>休暇希望フォーム</h1>
+
+  <div class="wrap">
+    <!-- ================= 左：カレンダー部分 ================= -->
+    <div class="calendar">
+      <!-- 月切り替えボタンとラベル -->
+      <div class="cal-header">
+        <div>
+          <button id="prev">&lt;</button>
+          <button id="next">&gt;</button>
+        </div>
+        <div id="monthLabel"></div>
+        <div></div>
+      </div>
+
+      <!-- 曜日ラベル -->
+      <div class="grid" id="weekdayLabels" style="margin-bottom:6px;">
+        <div>日</div><div>月</div><div>火</div><div>水</div><div>木</div><div>金</div><div>土</div>
+      </div>
+
+      <!-- 日付を動的に生成するエリア -->
+      <div class="grid" id="daysGrid"></div>
+
+      <div class="info"></div>
+    </div>
+
+    <!-- ================= 右：入力フォーム部分 ================= -->
+    <div>
+      <div style="background:#fff;border:1px solid #ddd;padding:12px;border-radius:8px;">
+        <label>選択日
+          <input id="selectedDate" type="text" readonly />
+        </label>
+
+        <label>名前
+          <input id="name" type="text" placeholder="名前を入力" />
+        </label>
+
+        <label>開始時間
+          <input id="startTime" type="time" />
+        </label>
+
+        <label>終了時間
+          <input id="endTime" type="time" />
+        </label>
+
+        <label>備考（任意）
+          <textarea id="notes" rows="3" placeholder=""></textarea>
+        </label>
+
+        <button class="submit" id="submitBtn">送信</button>
+        <div id="result" class="info"></div>
+      </div>
+    </div>
+  </div>
+
+<!-- ================= スクリプト部分 ================= -->
+<script>
+// ====== カレンダー関連のJSはあなたのままでOK ======
+const daysGrid = document.getElementById('daysGrid');
+const monthLabel = document.getElementById('monthLabel');
+const prevBtn = document.getElementById('prev');
+const nextBtn = document.getElementById('next');
+let currentDate = new Date();
+let selected = null;
+
+function renderCalendar(date){
+  daysGrid.innerHTML = '';
+  const y = date.getFullYear();
+  const m = date.getMonth();
+  monthLabel.textContent = y + '年 ' + (m + 1) + '月';
+  const first = new Date(y, m, 1);
+  const last = new Date(y, m + 1, 0);
+  const startPad = first.getDay();
+  const total = last.getDate();
+  for(let i=0; i<startPad; i++){
+    const d = document.createElement('div');
+    d.className = 'day inactive';
+    daysGrid.appendChild(d);
+  }
+  for(let day=1; day<=total; day++){
+    const d = document.createElement('div');
+    d.className = 'day';
+    d.textContent = day;
+    const dateStr = formatDateYYYYMMDD(new Date(y,m,day));
+    d.dataset.date = dateStr;
+    if(selected === dateStr){
+      d.classList.add('selected');
+    }
+    d.addEventListener('click', () => {
+      selected = dateStr;
+      document.querySelectorAll('.day').forEach(el => el.classList.remove('selected'));
+      d.classList.add('selected');
+      document.getElementById('selectedDate').value = dateStr;
+    });
+    daysGrid.appendChild(d);
+  }
+}
+
+function formatDateYYYYMMDD(d){
+  const Y = d.getFullYear();
+  const M = String(d.getMonth()+1).padStart(2,'0');
+  const D = String(d.getDate()).padStart(2,'0');
+  return `${Y}-${M}-${D}`;
+}
+
+prevBtn.addEventListener('click', ()=>{
+  currentDate.setMonth(currentDate.getMonth()-1);
+  renderCalendar(currentDate);
+});
+nextBtn.addEventListener('click', ()=>{
+  currentDate.setMonth(currentDate.getMonth()+1);
+  renderCalendar(currentDate);
+});
+renderCalendar(currentDate);
+
+// ====== フォーム送信部分（ここが変更点！） ======
+document.getElementById('submitBtn').addEventListener('click', async ()=>{
+  const date = document.getElementById('selectedDate').value;
+  const name = document.getElementById('name').value.trim();
+  const start = document.getElementById('startTime').value;
+  const end = document.getElementById('endTime').value;
+  const notes = document.getElementById('notes').value.trim();
+  const result = document.getElementById('result');
+  result.textContent = '';
+
+  if(!date){ result.textContent = '日付を選択してください。'; return; }
+  if(!name){ result.textContent = '名前を入力してください。'; return; }
+
+  const payload = { date, name, start, end, duration: '', notes };
+
+  // GASデプロイURL
+  const GAS_URL = 'https://script.google.com/macros/s/AKfycbzJWaPiPdEkXsLO_SyZ4SMjjalg42T7l-DyvqkG6PaGxNdLCMTzMxhaUo_vVMZ6hurjXQ/exec';
+
+  try {
+    const res = await fetch(GAS_URL, {
+      method: 'POST',
+      mode: 'cors', // 外部アクセスのため
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    const text = await res.text();
+    result.textContent = text || '送信完了しました！';
+  } catch (err) {
+    result.textContent = '送信中にエラーが発生しました: ' + err.message;
+  }
+});
+</script>
+</body>
+</html>
