@@ -12,13 +12,11 @@
     padding:18px; max-width:900px; margin:0 auto;
   }
   h1{font-size:20px;margin-bottom:6px;}
-  /* 全体レイアウト：左にカレンダー、右にフォーム */
   .wrap{
     display:grid;
     grid-template-columns: 1fr 380px;
     gap:18px;
   }
-  /* カレンダーの見た目 */
   .calendar{
     background:#fff;
     border:1px solid #ddd;
@@ -32,13 +30,11 @@
     margin-bottom:8px;
   }
   button{cursor:pointer}
-  /* 曜日・日付マスのグリッドレイアウト */
   .grid{
     display:grid;
     grid-template-columns:repeat(7,1fr);
     gap:6px;
   }
-  /* 各日のマス */
   .day{
     padding:8px;
     border-radius:6px;
@@ -48,7 +44,6 @@
   .day:hover{background:#f0f0f0}
   .day.inactive{color:#bbb}
   .day.selected{background:#2d8cff;color:white}
-  /* 入力フォーム */
   label{display:block;font-size:13px;margin-top:8px;}
   input, textarea{
     width:100%;
@@ -58,7 +53,6 @@
     border-radius:6px;
     border:1px solid #ccc
   }
-  /* 送信ボタン */
   .submit{
     margin-top:12px;
     padding:10px 14px;
@@ -78,7 +72,6 @@
   <div class="wrap">
     <!-- ================= 左：カレンダー部分 ================= -->
     <div class="calendar">
-      <!-- 月切り替えボタンとラベル -->
       <div class="cal-header">
         <div>
           <button id="prev">&lt;</button>
@@ -88,15 +81,13 @@
         <div></div>
       </div>
 
-      <!-- 曜日ラベル -->
       <div class="grid" id="weekdayLabels" style="margin-bottom:6px;">
         <div>日</div><div>月</div><div>火</div><div>水</div><div>木</div><div>金</div><div>土</div>
       </div>
 
-      <!-- 日付を動的に生成するエリア -->
       <div class="grid" id="daysGrid"></div>
 
-      <div class="info"></div>
+      <div class="info" id="calendarInfo">日付をクリックして選択してください。</div>
     </div>
 
     <!-- ================= 右：入力フォーム部分 ================= -->
@@ -130,7 +121,8 @@
 
 <!-- ================= スクリプト部分 ================= -->
 <script>
-// ====== カレンダー関連のJSはあなたのままでOK ======
+
+// --- カレンダー ---
 const daysGrid = document.getElementById('daysGrid');
 const monthLabel = document.getElementById('monthLabel');
 const prevBtn = document.getElementById('prev');
@@ -147,16 +139,20 @@ function renderCalendar(date){
   const last = new Date(y, m + 1, 0);
   const startPad = first.getDay();
   const total = last.getDate();
+
+  // 前月の空白セル（見た目用）
   for(let i=0; i<startPad; i++){
     const d = document.createElement('div');
     d.className = 'day inactive';
     daysGrid.appendChild(d);
   }
+
+  // 当月の日付セル
   for(let day=1; day<=total; day++){
     const d = document.createElement('div');
     d.className = 'day';
     d.textContent = day;
-    const dateStr = formatDateYYYYMMDD(new Date(y,m,day));
+    const dateStr = formatDateYYYYMMDD(new Date(y,m,day)); // YYYY-MM-DD
     d.dataset.date = dateStr;
     if(selected === dateStr){
       d.classList.add('selected');
@@ -166,6 +162,7 @@ function renderCalendar(date){
       document.querySelectorAll('.day').forEach(el => el.classList.remove('selected'));
       d.classList.add('selected');
       document.getElementById('selectedDate').value = dateStr;
+      document.getElementById('calendarInfo').textContent = dateStr + ' を選択しました。';
     });
     daysGrid.appendChild(d);
   }
@@ -188,7 +185,30 @@ nextBtn.addEventListener('click', ()=>{
 });
 renderCalendar(currentDate);
 
-// ====== フォーム送信部分（ここが変更点！） ======
+// --- ユーティリティ関数 ---
+// ローカル(ブラウザ)の現在日時を ISO 形式で得る（UTCではなくクライアントのタイムゾーン表現）
+// ここではタイムスタンプとして ISO (UTC) を送る（GAS 側で解釈可能）。
+function getSendDatetimeISO(){
+  return new Date().toISOString(); // ex: 2025-10-20T00:12:34.567Z
+}
+
+// 時刻（HH:MM）から分数（小数時間）に変換。空文字は null を返す。
+function calcDurationHours(startHHMM, endHHMM){
+  if(!startHHMM || !endHHMM) return null;
+  const [sh, sm] = startHHMM.split(':').map(Number);
+  const [eh, em] = endHHMM.split(':').map(Number);
+  // 日跨ぎを考慮して、終了が開始より前なら翌日扱い
+  let startMins = sh*60 + sm;
+  let endMins = eh*60 + em;
+  if(endMins < startMins) endMins += 24*60;
+  const diffM = endMins - startMins;
+  return Math.round((diffM/60) * 100) / 100; // 小数2桁の時間（例: 1.50）
+}
+
+// --- フォーム送信処理 ---
+// GASのURL
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxMAP30srQbD8q2Em-7Cu8c9Igs9Td7aTQqFpEltpKpGyYT7qiEIM2EBQfN9sbgPveYkw/exec'; // デプロイ後に置き換える
+
 document.getElementById('submitBtn').addEventListener('click', async ()=>{
   const date = document.getElementById('selectedDate').value;
   const name = document.getElementById('name').value.trim();
@@ -198,15 +218,34 @@ document.getElementById('submitBtn').addEventListener('click', async ()=>{
   const result = document.getElementById('result');
   result.textContent = '';
 
+  // --- バリデーション ---
   if(!date){ result.textContent = '日付を選択してください。'; return; }
   if(!name){ result.textContent = '名前を入力してください。'; return; }
+  // 時間がどちらも空なら OK（終日希望など）。片方だけだとエラーにする。
+  if((start && !end) || (!start && end)){
+    result.textContent = '開始時間と終了時間は両方入力するか、両方未入力にしてください。';
+    return;
+  }
 
-  const payload = { date, name, start, end, duration: '', notes };
+  // duration を計算（両方入力時のみ）
+  const duration = calcDurationHours(start, end); // null または 小数（h）
+  const payload = {
+    sendDatetime: getSendDatetimeISO(), // 送信日時（ISO）
+    name,
+    date,        // 希望日（YYYY-MM-DD）
+    startTime: start || '', // 空文字許容
+    endTime: end || '',
+    durationHours: duration === null ? '' : String(duration), // スプレッドシート保存用に文字列化
+    notes
+  };
 
-  // GASデプロイURL
-  const GAS_URL = 'https://script.google.com/macros/s/AKfycby966gTlc7sVZGsWXXtsLsnlp3tvn-pnIxovYQ2QDRwlcrYJ6EEhpWOsKkQz5vySsFKaQ/exec';
+  // UX向上: ボタン無効化して多重送信を防ぐ
+  const submitBtn = document.getElementById('submitBtn');
+  submitBtn.disabled = true;
+  submitBtn.textContent = '送信中...';
 
   try {
+    // POST で JSON を送信
     const res = await fetch(GAS_URL, {
       method: 'POST',
       mode: 'cors',
@@ -215,32 +254,39 @@ document.getElementById('submitBtn').addEventListener('click', async ()=>{
     });
 
     if (!res.ok) {
-      // サーバーが200以外を返した場合
+      // サーバーが200系以外を返した場合はテキストを表示
       const text = await res.text();
       alert('サーバーエラー: ' + text);
+      result.textContent = 'サーバーエラー: ' + text;
       return;
     }
 
-    // JSONで返す場合
-    let json;
-    try {
-      json = await res.json();
-    } catch {
-      json = { status: 'ok' }; // 返り値がJSONでなくてもOKとする
-    }
+    // レスポンスは JSON を期待（GAS で JSON を返す）
+    const json = await res.json();
 
     if (json.status === 'ok') {
       alert('送信完了しました');
-      result.textContent = '送信完了しました';
+      result.textContent = '送信完了しました（' + payload.sendDatetime + '）';
+      // 送信後はフォームをクリア（選択はそのまま）
+      document.getElementById('name').value = '';
+      document.getElementById('startTime').value = '';
+      document.getElementById('endTime').value = '';
+      document.getElementById('notes').value = '';
+      // optional: calendar の選択解除をしたい場合は以下の2行のコメントを外す
+      // selected = null;
+      // document.querySelectorAll('.day').forEach(el => el.classList.remove('selected'));
     } else {
       alert('送信エラー: ' + (json.message || '不明なエラー'));
       result.textContent = '送信エラー: ' + (json.message || '不明なエラー');
     }
 
   } catch (err) {
-    // fetch自体でネットワークエラーなどが起きた場合
+    // ネットワークエラー等
     alert('通信中にエラーが発生しました: ' + err.message);
     result.textContent = '通信中にエラーが発生しました: ' + err.message;
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = '送信';
   }
 });
 </script>
