@@ -207,7 +207,7 @@ function calcDurationHours(startHHMM, endHHMM){
 
 // --- フォーム送信処理 ---
 // GASのURL
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbxMAP30srQbD8q2Em-7Cu8c9Igs9Td7aTQqFpEltpKpGyYT7qiEIM2EBQfN9sbgPveYkw/exec'; // デプロイ後に置き換える
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzZF5DK7fYZoDLFb_gdSR1CCBM_OlW8WRixTGi3qzBwfxiUCFmd32MVyBUy92pXogKU2g/exec'; // デプロイ後に置き換える
 
 document.getElementById('submitBtn').addEventListener('click', async ()=>{
   const date = document.getElementById('selectedDate').value;
@@ -275,7 +275,7 @@ document.getElementById('submitBtn').addEventListener('click', async ()=>{
       // optional: calendar の選択解除をしたい場合は以下の2行のコメントを外す
       // selected = null;
       // document.querySelectorAll('.day').forEach(el => el.classList.remove('selected'));
-      
+
     } else {
       alert('送信エラー: ' + (json.message || '不明なエラー'));
       result.textContent = '送信エラー: ' + (json.message || '不明なエラー');
