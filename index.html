@@ -221,7 +221,7 @@ document.getElementById('submitBtn').addEventListener('click', async ()=>{
   // --- バリデーション ---
   if(!date){ result.textContent = '日付を選択してください。'; return; }
   if(!name){ result.textContent = '名前を入力してください。'; return; }
-  // 時間がどちらも空なら OK（終日希望など）。片方だけだとエラーにする。
+  // 時間がどちらも空なら可、片方だけだとエラー
   if((start && !end) || (!start && end)){
     result.textContent = '開始時間と終了時間は両方入力するか、両方未入力にしてください。';
     return;
@@ -239,7 +239,7 @@ document.getElementById('submitBtn').addEventListener('click', async ()=>{
     notes
   };
 
-  // UX向上: ボタン無効化して多重送信を防ぐ
+  // ボタン無効化して多重送信を防ぐ
   const submitBtn = document.getElementById('submitBtn');
   submitBtn.disabled = true;
   submitBtn.textContent = '送信中...';
@@ -275,6 +275,7 @@ document.getElementById('submitBtn').addEventListener('click', async ()=>{
       // optional: calendar の選択解除をしたい場合は以下の2行のコメントを外す
       // selected = null;
       // document.querySelectorAll('.day').forEach(el => el.classList.remove('selected'));
+      
     } else {
       alert('送信エラー: ' + (json.message || '不明なエラー'));
       result.textContent = '送信エラー: ' + (json.message || '不明なエラー');
