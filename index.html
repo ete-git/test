@@ -207,7 +207,7 @@ function calcDurationHours(startHHMM, endHHMM){
 
 // --- フォーム送信処理 ---
 // GASのURL
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbzL7SeC_6ttiq8bGmRSrkWUvEIIFK3N11wbw-mqZJ_BCU0pHOka7ByExZ8-FVE9nfO1Mw/exec'; // デプロイ後に置き換える
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbzbuqVuGvcTpjBds5iRI7Wwt-Ya-KhObUcEyKEzVcjLiDoYZ5qXDl5aTQB_v5WXMLMx7Q/exec'; // デプロイ後に置き換える
 
 document.getElementById('submitBtn').addEventListener('click', async ()=>{
   const date = document.getElementById('selectedDate').value;
@@ -258,7 +258,7 @@ document.getElementById('submitBtn').addEventListener('click', async ()=>{
 
     const res = await fetch(GAS_URL, {
       method: 'POST',
-      mode: 'no-cors',
+      // mode: 'no-cors',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
       },
