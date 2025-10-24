@@ -207,7 +207,7 @@ function calcDurationHours(startHHMM, endHHMM){
 
 // --- フォーム送信処理 ---
 // GASのURL
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbwz8S5WfjKcKYlWP23pTpYwspHoqHkrdHKxo_tJa6k6laequfrlBh3dTuRmR5Ba47nU3Q/exec'; // デプロイ後に置き換える
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbyMPXbhESZ5_0q7S_jrE47eZvs_i9JtGBfeACDx7AlncP8tMIxv9TruG9iPpwYPiCwaxg/exec'; // デプロイ後に置き換える
 
 document.getElementById('submitBtn').addEventListener('click', async ()=>{
   const date = document.getElementById('selectedDate').value;
@@ -246,11 +246,23 @@ document.getElementById('submitBtn').addEventListener('click', async ()=>{
 
   try {
     // POST で JSON を送信
+    const params = new URLSearchParams({
+      sendDatetime: getSendDatetimeISO(),
+      name,
+      date,
+      startTime: start || '',
+      endTime: end || '',
+      durationHours: duration === null ? '' : String(duration),
+      notes
+    });
+
     const res = await fetch(GAS_URL, {
       method: 'POST',
-      mode: 'cors',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      mode: 'no-cors', // ← これでもOK。CORSを気にせず送信。
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: params
     });
 
     if (!res.ok) {
